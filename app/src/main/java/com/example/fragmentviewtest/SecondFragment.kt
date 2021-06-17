@@ -17,20 +17,7 @@ class SecondFragment : Fragment() {
     private var _binding: FragmentSecondBinding? = null
     private val binding get() = _binding!!
 
-    private val onBackStackChangedListener = FragmentManager.OnBackStackChangedListener {
-        Log.d(
-            SecondFragment::class.java.simpleName,
-            "lastFragment: ${parentFragmentManager.fragments.lastOrNull()}"
-        )
-        parentFragmentManager.fragments.lastOrNull()?.let {
-            Toast.makeText(
-                requireContext(),
-                "Fragment visible ${isFragmentVisible(it)}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
+    //todo Create a global variable covered to improve optimization
     private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
 
         override fun onFragmentViewCreated(
@@ -77,6 +64,7 @@ class SecondFragment : Fragment() {
             val actualFragmentView = it.view
 
             if (fragmentView != null && actualFragmentView != null) {
+                //Variables for debugging
                 val actualFragmentViewHeight = actualFragmentView.height
                 val actualFragmentViewWidth = actualFragmentView.width
                 val actualFragmentViewX = actualFragmentView.x
@@ -94,12 +82,6 @@ class SecondFragment : Fragment() {
             }
         }
         return false
-    }
-
-
-    override fun setMenuVisibility(menuVisible: Boolean) {
-        super.setMenuVisibility(menuVisible)
-        Log.d(SecondFragment::class.java.simpleName, "Menu visible $menuVisible")
     }
 
     override fun onCreateView(
@@ -124,11 +106,6 @@ class SecondFragment : Fragment() {
         super.onDestroyView()
         this.parentFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
         _binding = null
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(SecondFragment::class.java.simpleName, "On pause")
     }
 
     private fun initListener() {
