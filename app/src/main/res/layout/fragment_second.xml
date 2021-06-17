@@ -37,9 +37,22 @@
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
         android:text="Go to third screen"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/second_button_partial"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/second_button_back" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/second_button_partial"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Open partial fragment"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/second_button_forward" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

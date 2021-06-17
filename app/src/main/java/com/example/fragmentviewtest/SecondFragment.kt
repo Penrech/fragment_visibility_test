@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -24,14 +25,77 @@ class SecondFragment : Fragment() {
         parentFragmentManager.fragments.lastOrNull()?.let {
             Toast.makeText(
                 requireContext(),
-                "Fragment visible ${this == it}",
+                "Fragment visible ${isFragmentVisible(it)}",
                 Toast.LENGTH_SHORT
             ).show()
         }
     }
 
-    private fun isFragmentVisible(actualFragment: Fragment?) =
-        this == actualFragment
+    private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+
+        override fun onFragmentViewCreated(
+            fm: FragmentManager,
+            f: Fragment,
+            v: View,
+            savedInstanceState: Bundle?
+        ) {
+            super.onFragmentViewCreated(fm, f, v, savedInstanceState)
+
+            v.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    if (v.height > 0 && v.width > 0) {
+                        Log.d(
+                            SecondFragment::class.java.simpleName,
+                            "New Fragment height is ${v.height}"
+                        )
+                        showToast(isFragmentVisible(f))
+                        v.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    }
+                }
+
+            })
+        }
+
+        override fun onFragmentDetached(fm: FragmentManager, f: Fragment) {
+            super.onFragmentDetached(fm, f)
+            showToast(isFragmentVisible(fm.fragments.lastOrNull()))
+        }
+    }
+
+    private fun showToast(fragmentVisible: Boolean) {
+        Toast.makeText(
+            requireContext(),
+            "Fragment visible $fragmentVisible",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun isFragmentVisible(actualFragment: Fragment?): Boolean {
+        if (this == actualFragment) return true
+        actualFragment?.let {
+            val fragmentView = this.view
+            val actualFragmentView = it.view
+
+            if (fragmentView != null && actualFragmentView != null) {
+                val actualFragmentViewHeight = actualFragmentView.height
+                val actualFragmentViewWidth = actualFragmentView.width
+                val actualFragmentViewX = actualFragmentView.x
+                val actualFragmentViewY = actualFragmentView.y
+                val fragmentViewHeight = fragmentView.height
+                val fragmentViewWidth = fragmentView.width
+                val fragmentViewX = fragmentView.x
+                val fragmentViewY = fragmentView.y
+                val isActualFragmentCoveringThisOne =
+                    actualFragmentViewHeight >= fragmentViewHeight &&
+                            actualFragmentViewWidth >= fragmentViewWidth &&
+                            actualFragmentViewX >= fragmentViewX &&
+                            actualFragmentViewY >= fragmentViewY
+                return !isActualFragmentCoveringThisOne
+            }
+        }
+        return false
+    }
+
 
     override fun setMenuVisibility(menuVisible: Boolean) {
         super.setMenuVisibility(menuVisible)
@@ -49,13 +113,16 @@ class SecondFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        this.parentFragmentManager.addOnBackStackChangedListener(onBackStackChangedListener)
+        this.parentFragmentManager.registerFragmentLifecycleCallbacks(
+            fragmentLifecycleCallbacks,
+            false
+        )
         initListener()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        this.parentFragmentManager.removeOnBackStackChangedListener(onBackStackChangedListener)
+        this.parentFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
         _binding = null
     }
 
@@ -74,6 +141,13 @@ class SecondFragment : Fragment() {
 
         binding.secondButtonBack.setOnClickListener {
             this.parentFragmentManager.popBackStack()
+        }
+
+        binding.secondButtonPartial.setOnClickListener {
+            this.parentFragmentManager.commit {
+                addToBackStack(null)
+                add(R.id.main_fragment_container, PartialFragment())
+            }
         }
     }
 }
